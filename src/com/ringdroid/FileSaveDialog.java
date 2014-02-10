@@ -148,4 +148,9 @@ public class FileSaveDialog extends Dialog {
                 dismiss();
             }
         };
+    
+    
+    private void updateFileName() {
+    	
+    }
 }

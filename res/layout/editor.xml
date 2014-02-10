@@ -154,7 +154,13 @@
 	   android:layout_marginLeft="10dip"
            android:gravity="center"
            android:contentDescription="@string/end_label" />
-
+		<EditText android:id="@+id/gainValue"
+           android:textSize="16sp"
+           android:layout_width="50dip"
+           android:layout_height="44dip"
+           android:layout_marginLeft="2dip"
+           android:layout_marginRight="2dip"
+           android:gravity="center" />
       </LinearLayout>
 
    </LinearLayout>

@@ -115,6 +115,7 @@ public class RingdroidEditActivity extends Activity
     private MarkerView mStartMarker;
     private MarkerView mEndMarker;
     private TextView mStartText;
+    private TextView mGainText;
     private TextView mEndText;
     private TextView mInfo;
     private ImageButton mPlayButton;
@@ -151,6 +152,7 @@ public class RingdroidEditActivity extends Activity
     private int mMarkerRightInset;
     private int mMarkerTopOffset;
     private int mMarkerBottomOffset;
+    private int mIndex;
 
     // Result codes
     private static final int REQUEST_CODE_RECORD = 1;
@@ -615,6 +617,7 @@ public class RingdroidEditActivity extends Activity
         mMarkerTopOffset = (int)(10 * mDensity);
         mMarkerBottomOffset = (int)(10 * mDensity);
 
+        mGainText = (TextView)findViewById(R.id.gainValue);
         mStartText = (TextView)findViewById(R.id.starttext);
         mStartText.addTextChangedListener(mTextWatcher);
         mEndText = (TextView)findViewById(R.id.endtext);
@@ -663,6 +666,32 @@ public class RingdroidEditActivity extends Activity
         mEndMarker.setFocusable(true);
         mEndMarker.setFocusableInTouchMode(true);
 	mEndVisible = true;
+	
+		Button save = (Button)findViewById(R.id.buttonSave);
+		save.setOnClickListener(new OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				onSave();
+			}
+		});
+		
+		ImageButton zoomIn = (ImageButton)findViewById(R.id.zoom_in);
+		zoomIn.setOnClickListener(new OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				waveformZoomIn();
+			}
+		});
+		ImageButton zoomOut = (ImageButton)findViewById(R.id.zoom_out);
+		zoomOut.setOnClickListener(new OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				waveformZoomOut();
+			}
+		});
 
         updateDisplay();
     }
@@ -961,6 +990,8 @@ public class RingdroidEditActivity extends Activity
                     !mStartText.hasFocus()) {
                     mStartText.setText(formatTime(mStartPos));
                     mLastDisplayedStartPos = mStartPos;
+                    mGainText.setText(String.valueOf(
+                    		mWaveformView.piexelsToGain(mStartPos)));
                 }
 
                 if (mEndPos != mLastDisplayedEndPos &&
@@ -1579,6 +1610,29 @@ public class RingdroidEditActivity extends Activity
                 .setMovementMethod(LinkMovementMethod.getInstance());
     }
 
+    private static final int RADIX = 36;
+    private static final int DURATION_UNIT_MS = 10;
+    private static final String NAME_HYPHEN = "-";
+    
+    // index-duration-volume-beat-
+    private String genFileName() {
+    	String name = Integer.toString(mIndex, RADIX) + NAME_HYPHEN;
+        double startTime = mWaveformView.pixelsToSeconds(mStartPos);
+        double endTime = mWaveformView.pixelsToSeconds(mEndPos);
+        final int startFrame = mWaveformView.secondsToFrames(startTime);
+        final int endFrame = mWaveformView.secondsToFrames(endTime);
+        final double duration = (endTime - startTime)*1000/DURATION_UNIT_MS;
+        name += Integer.toString((int)duration/DURATION_UNIT_MS, RADIX);
+        name += NAME_HYPHEN;
+        name += Integer.toString(mSoundFile.getMaxGain(
+        		startFrame, endFrame-startFrame), RADIX);
+        name += NAME_HYPHEN;
+        name += Integer.toString(mSoundFile.getBeat(startFrame, endFrame-startFrame),
+        		RADIX);
+        name += NAME_HYPHEN;
+        return name;
+    }
+    
     private void onSave() {
         if (mIsPlaying) {
             handlePause();
@@ -1593,7 +1647,7 @@ public class RingdroidEditActivity extends Activity
             };
         Message message = Message.obtain(handler);
         FileSaveDialog dlog = new FileSaveDialog(
-            this, getResources(), mTitle, message);
+            this, getResources(), genFileName(), message);
         dlog.show();
     }
 

@@ -321,4 +321,20 @@ public class CheapMP3 extends CheapSoundFile {
         44100, 48000, 32000, 0 };
     static private int SAMPLERATES_MPEG2_L3[] = {
         22050, 24000, 16000, 0 };
+
+	@Override
+	public int getAverageGain(int startFrame, int numFrames) {
+		int stopFrame = startFrame + numFrames;
+		long gain = 0;
+		for (int i = startFrame; i < stopFrame; i++) {
+			gain += mFrameGains[i];
+		}
+		return (int)(gain/numFrames);
+	}
+
+	@Override
+	public int getBeat(int startFrame, int numFrames) {
+		// TODO Auto-generated method stub
+		return super.getBeat(startFrame, numFrames);
+	}
 };

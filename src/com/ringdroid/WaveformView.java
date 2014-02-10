@@ -19,6 +19,7 @@ package com.ringdroid;
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.DashPathEffect;
 import android.util.AttributeSet;
@@ -31,6 +32,7 @@ import android.view.View;
 import com.ringdroid.soundfile.CheapSoundFile;
 
 import java.lang.Math;
+import java.util.ArrayList;
 import java.util.Map;
 
 /**
@@ -64,6 +66,7 @@ public class WaveformView extends View {
     private Paint mUnselectedBkgndLinePaint;
     private Paint mBorderLinePaint;
     private Paint mPlaybackLinePaint;
+    private Paint mWordsLinePaint;
     private Paint mTimecodePaint;
 
     private CheapSoundFile mSoundFile;
@@ -85,6 +88,7 @@ public class WaveformView extends View {
     private GestureDetector mGestureDetector;
     private ScaleGestureDetector mScaleGestureDetector;
     private boolean mInitialized;
+    private ArrayList<Integer> words;
 
     public WaveformView(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -120,6 +124,9 @@ public class WaveformView extends View {
         mPlaybackLinePaint.setAntiAlias(false);
         mPlaybackLinePaint.setColor(
             getResources().getColor(R.drawable.playback_indicator));
+        mWordsLinePaint = new Paint();
+        mWordsLinePaint.setAntiAlias(false);
+        mWordsLinePaint.setColor(Color.RED);
         mTimecodePaint = new Paint();
         mTimecodePaint.setTextSize(12);
         mTimecodePaint.setAntiAlias(true);
@@ -282,6 +289,14 @@ public class WaveformView extends View {
         double z = mZoomFactorByZoomLevel[mZoomLevel];
         return (pixels * (double)mSamplesPerFrame / (mSampleRate * z));
     }
+    
+    public int piexelsToGain(int pixels) {
+    	if (mSoundFile == null)
+    		return 0;
+    	double seconds = pixelsToSeconds(pixels);
+    	int frame = secondsToFrames(seconds);
+    	return mSoundFile.getFrameGains()[frame];
+    }
 
     public int millisecsToPixels(int msecs) {
         double z = mZoomFactorByZoomLevel[mZoomLevel];
@@ -299,6 +314,8 @@ public class WaveformView extends View {
         mSelectionStart = start;
         mSelectionEnd = end;
         mOffset = offset;
+        if (mSoundFile != null)
+        	words = mSoundFile.getWords(start, end - start);
     }
 
     public int getStart() {
@@ -391,6 +408,13 @@ public class WaveformView extends View {
 
             if (i + start == mPlaybackPos) {
                 canvas.drawLine(i, 0, i, measuredHeight, mPlaybackLinePaint);
+            }
+            if (words != null) {
+            	for (Integer e : words) {
+            		if (i + start == e.intValue()) {
+            			canvas.drawLine(i, 0, i, measuredHeight, mWordsLinePaint);
+            		}
+            	}
             }
         }
 
